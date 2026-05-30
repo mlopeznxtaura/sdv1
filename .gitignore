@@ -1,0 +1,42 @@
+# Environment variables
+.env
+.env.local
+.env.*
+
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Logs
+*.log
+pip_install.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+.coverage
+htmlcov/
+
+# Pytest
+.pytest_cache/
+
+# Ruff
+.ruff_cache/

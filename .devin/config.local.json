@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Exec(git)",
+      "Exec(\"C:\\Program Files\\IBM\\Cloud\\bin\\ibmcloud.exe\" api)",
+      "Exec(cmd.exe)",
+      "Exec(powershell.exe)"
+    ]
+  }
+}
