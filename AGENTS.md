@@ -29,7 +29,28 @@
   - Example: `cmd.exe` with args `[/c, dir E:\...]` executes any CMD builtin
 - **chrome-browser** MCP works globally regardless of drive
 
+## CLI Authentication (E: drive)
+All CLIs installed globally and authenticated. Run from any drive:
+
+```powershell
+# GitHub CLI — authenticated as mlopeznxtaura
+gh auth status
+
+# IBM Cloud CLI — authenticated as mlopez@nextaura.fit, region us-south
+ibmcloud account show
+
+# Google Cloud SDK — authenticated as marco.a.lopez89@gmail.com, project nextaura-core
+gcloud config list project
+
+# Cloudflare Wrangler — authenticated via API token (CLOUDFLARE_API_TOKEN)
+wrangler whoami
+```
+
+## Git
+- `.gitignore` ignores: `.env`, `.venv/`, `__pycache__/`, `.playwright-mcp/`, `*.log`, `.coverage`
+- Commit history was rewritten to a single clean root commit
+
 ## Project Notes
 - Build backend in `pyproject.toml` was fixed from `setuptools.backends.legacy:build` → `setuptools.build_meta`
-- `.env` file present with dashboard defaults
+- `.env` file present with dashboard defaults (ignored by git)
 - 2 pre-existing test failures in `tests/test_viabilityscan.py` (not environment-related)
