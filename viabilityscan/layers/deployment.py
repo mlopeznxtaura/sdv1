@@ -43,8 +43,13 @@ class DeploymentLayer(BaseLayer):
         findings.extend(f_ci)
         checks.update(checks_ci)
 
-        # Weighted sub-score (equal weight across 5 checks)
-        score = round((score_build + score_rollback + score_obs + score_mon + score_ci) / 5)
+        # 6. Django migration health
+        score_mig, f_mig, checks_mig = self._check_migrations()
+        findings.extend(f_mig)
+        checks.update(checks_mig)
+
+        # Weighted sub-score (equal weight across 6 checks)
+        score = round((score_build + score_rollback + score_obs + score_mon + score_ci + score_mig) / 6)
 
         for f in findings:
             if f.get("severity") in ("HIGH", "CRITICAL"):
@@ -281,6 +286,97 @@ class DeploymentLayer(BaseLayer):
                 "remediation": "Implement /healthz or /readyz endpoint for Kubernetes/load-balancer health probes.",
             })
             score -= 20
+
+        return max(0, score), findings, checks
+
+    def _check_migrations(self) -> tuple[int, list, dict]:
+        findings = []
+        checks = {}
+        score = 100
+
+        # Detect Django project
+        has_manage = (self.repo / "manage.py").exists()
+        checks["has_django_manage"] = has_manage
+        if not has_manage:
+            # Not a Django project — skip migration checks, neutral score
+            return 100, findings, checks
+
+        settings_module = None
+        try:
+            content = (self.repo / "manage.py").read_text(errors="replace")
+            for line in content.splitlines():
+                if "DJANGO_SETTINGS_MODULE" in line:
+                    import re
+                    m = re.search(r"['\"]([\w.]+)['\"]\s*\)", line)
+                    if m:
+                        settings_module = m.group(1)
+                        break
+        except Exception:
+            pass
+        checks["django_settings_module"] = settings_module
+
+        # Check for migration files in git
+        migration_files = list(self.repo.rglob("*/migrations/0*.py"))
+        checks["migration_file_count"] = len(migration_files)
+        if not migration_files:
+            findings.append({
+                "rule": "deploy_no_migrations",
+                "title": "Django project has no migration files",
+                "file": "manage.py",
+                "line": None,
+                "severity": "HIGH",
+                "layer": "deployment",
+                "remediation": "Run 'python manage.py makemigrations' and commit the generated migration files to git.",
+            })
+            score -= 30
+        else:
+            # Check for uncommitted migrations
+            try:
+                import subprocess
+                result = subprocess.run(
+                    ["git", "status", "--short", "--", str(self.repo)],
+                    capture_output=True, text=True, cwd=str(self.repo)
+                )
+                uncommitted_migs = [l for l in result.stdout.splitlines() if "migrations/0" in l]
+                checks["uncommitted_migrations"] = len(uncommitted_migs)
+                if uncommitted_migs:
+                    findings.append({
+                        "rule": "deploy_uncommitted_migrations",
+                        "title": f"{len(uncommitted_migs)} uncommitted Django migration file(s)",
+                        "file": "migrations/",
+                        "line": None,
+                        "severity": "CRITICAL",
+                        "layer": "deployment",
+                        "remediation": "Commit all migration files before deploy. Uncommitted migrations cause schema drift.",
+                    })
+                    score -= 40
+            except Exception:
+                pass
+
+            # Check if models and migrations are in sync
+            if settings_module:
+                try:
+                    import os
+                    env = os.environ.copy()
+                    env["DJANGO_SETTINGS_MODULE"] = settings_module
+                    result = subprocess.run(
+                        ["python", str(self.repo / "manage.py"), "makemigrations", "--check", "--dry-run"],
+                        capture_output=True, text=True, cwd=str(self.repo), env=env, timeout=30
+                    )
+                    checks["migrations_in_sync"] = (result.returncode == 0)
+                    if result.returncode != 0:
+                        findings.append({
+                            "rule": "deploy_migrations_out_of_sync",
+                            "title": "Django models and migrations are out of sync",
+                            "file": "models.py",
+                            "line": None,
+                            "severity": "CRITICAL",
+                            "layer": "deployment",
+                            "remediation": "Run 'python manage.py makemigrations' to generate missing migrations, then commit them.",
+                        })
+                        score -= 40
+                except Exception:
+                    checks["migrations_in_sync"] = None
 
         return max(0, score), findings, checks
 

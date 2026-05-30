@@ -1,0 +1,44 @@
+name: "Django Migration Health"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  migration-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev,django]"
+
+      - name: Check migrations are committed
+        run: |
+          if git status --short | grep -q "migrations/0"; then
+            echo "ERROR: Uncommitted Django migrations detected"
+            git status --short
+            exit 1
+          fi
+
+      - name: Check models and migrations are in sync
+        env:
+          DJANGO_SETTINGS_MODULE: django_project.settings
+        run: |
+          python manage.py makemigrations --check --dry-run
+
+      - name: Verify migrations apply cleanly
+        env:
+          DJANGO_SETTINGS_MODULE: django_project.settings
+        run: |
+          python manage.py migrate --run-syncdb
+          python manage.py migrate --check

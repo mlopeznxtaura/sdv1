@@ -27,6 +27,17 @@ pip_install.log
 .vscode/
 .idea/
 
+# Generated artifacts
+viability_report.json
+
+# Django
+*.sqlite3
+*.db
+data/
+
+# Local dev configs
+.devin/config.local.json
+
 # OS
 .DS_Store
 Thumbs.db
