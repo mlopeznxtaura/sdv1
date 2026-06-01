@@ -31,6 +31,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy app code
 COPY --from=builder /app .
+COPY templates/ ./templates/
 COPY dashboard/ ./dashboard/
 COPY tests/ ./tests/
 COPY .github/ ./.github/
