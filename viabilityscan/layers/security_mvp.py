@@ -32,7 +32,20 @@ SECRET_PATTERNS = [
 SECRET_SKIP_EXT = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".woff", ".woff2",
                    ".ttf", ".eot", ".mp4", ".mp3", ".pdf", ".zip", ".tar", ".gz",
                    ".pyc", ".pyo", ".class", ".so", ".dll", ".exe", ".bin"}
-SECRET_SKIP_DIRS = {".git", "__pycache__", "node_modules", "venv", ".venv", "dist", "build"}
+SECRET_SKIP_DIRS = {".git", "__pycache__", "node_modules", "venv", ".venv", "dist", "build", ".tox", ".eggs"}
+
+# Documentation / template / example files — skip entirely for secret scanning
+SECRET_SKIP_SUFFIXES = {".md", ".rst", ".txt", ".log", ".example", ".template", ".sample", ".bak", ".orig"}
+
+# Patterns that are safe to ignore (examples, documentation placeholders)
+SAFE_PATTERNS = {
+    "example", "placeholder", "your-", "YOUR_", "changeme", "password123",
+    "supersecret", "mypassword", "hardcoded", "dummy", "test-", "TEST_",
+    "your_email", "your_username", "your_app_id", "client_id_here",
+}
+
+# Max file size to scan (bytes)
+MAX_FILE_SIZE = 1024 * 1024  # 1 MB
 
 # Known-vulnerable dependency patterns (representative subset; full list → agents.jsonl gap)
 VULN_DEPS = {
@@ -122,11 +135,32 @@ class SecurityMVPLayer(BaseLayer):
         for filepath in self.repo.rglob("*"):
             if not filepath.is_file():
                 continue
-            if filepath.suffix.lower() in SECRET_SKIP_EXT:
+
+            fname = filepath.name.lower()
+            fsuffix = filepath.suffix.lower()
+
+            # Skip binary/media files
+            if fsuffix in SECRET_SKIP_EXT:
                 continue
+
+            # Skip docs / templates / examples / logs
+            if fsuffix in SECRET_SKIP_SUFFIXES:
+                continue
+            if any(s in fname for s in (".example", ".template", ".sample", ".bak", ".orig", ".log")):
+                continue
+
+            # Skip generated/cache directories
             if any(p in filepath.parts for p in SECRET_SKIP_DIRS):
                 continue
-            # Skip .env files in gitignore (but flag if not gitignored)
+
+            # Skip large files
+            try:
+                fsize = filepath.stat().st_size
+                if fsize > MAX_FILE_SIZE:
+                    continue
+            except Exception:
+                continue
+
             rel = filepath.relative_to(self.repo)
             try:
                 content = filepath.read_text(encoding="utf-8", errors="replace")
@@ -135,6 +169,23 @@ class SecurityMVPLayer(BaseLayer):
 
             for pattern_name, pattern in SECRET_PATTERNS:
                 for m in pattern.finditer(content):
+                    match_text = m.group()
+
+                    # Skip if match contains safe/example keywords
+                    if any(safe in match_text.lower() for safe in SAFE_PATTERNS):
+                        continue
+
+                    # For "Basic Auth in URL", skip HTML/CSS font/script URLs
+                    if pattern_name == "Basic Auth in URL":
+                        if "fonts.googleapis.com" in match_text or "fonts.gstatic.com" in match_text:
+                            continue
+                        # Skip if line is a comment or string literal with example text
+                        line_start = content.rfind("\n", 0, m.start()) + 1
+                        line_end = content.find("\n", m.start())
+                        line = content[line_start:line_end if line_end != -1 else len(content)]
+                        if any(safe in line.lower() for safe in SAFE_PATTERNS):
+                            continue
+
                     line_no = content[:m.start()].count("\n") + 1
                     sev = "CRITICAL" if pattern_name in ("Private Key Header", "AWS Access Key", "AWS Secret Key") else "HIGH"
                     findings.append({
@@ -144,7 +195,7 @@ class SecurityMVPLayer(BaseLayer):
                         "line": line_no,
                         "severity": sev,
                         "layer": "secret_scan",
-                        "remediation": f"Rotate the credential and use a secrets manager (Vault, AWS Secrets Manager). Remove from history with git-filter-repo.",
+                        "remediation": "Rotate the credential and use a secrets manager. Remove from history with git-filter-repo.",
                     })
                     penalty += 20 if sev == "CRITICAL" else 10
 

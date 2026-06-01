@@ -90,14 +90,25 @@ class ViabilityEngine:
         exts: dict[str, int] = {}
         total_lines = 0
         file_count = 0
+        max_file_size = 1024 * 1024  # 1 MB
 
         for f in self.repo.rglob("*"):
             if f.is_file() and not self._is_ignored(f):
+                # Skip huge files
+                try:
+                    if f.stat().st_size > max_file_size:
+                        continue
+                except Exception:
+                    continue
+
                 ext = f.suffix.lower()
                 exts[ext] = exts.get(ext, 0) + 1
                 file_count += 1
+
+                # Count lines properly (text mode, not binary)
                 try:
-                    total_lines += sum(1 for _ in f.open("rb"))
+                    with f.open("r", encoding="utf-8", errors="replace") as fh:
+                        total_lines += sum(1 for _ in fh)
                 except Exception:
                     pass
 
