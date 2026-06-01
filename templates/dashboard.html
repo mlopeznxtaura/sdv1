@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vault Dashboard — NextAura</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --void: #0D0D0D;
+            --vault: #1A1A1B;
+            --bronze: #806000;
+            --gold-light: #FFD700;
+            --gold-dark: #B8860B;
+            --text: #FFFFFF;
+            --text-muted: rgba(255,255,255,0.55);
+            --text-dim: rgba(255,255,255,0.25);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--void);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--bronze);
+            margin-bottom: 2rem;
+        }
+        .logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: 0.05em;
+        }
+        .logo span {
+            background: linear-gradient(45deg, var(--gold-dark), var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            border: 1px solid var(--bronze);
+            font-size: 0.6875rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .badge.staff {
+            background: linear-gradient(45deg, var(--gold-dark), var(--gold-light));
+            color: var(--void);
+            border: none;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background: var(--vault);
+            border: 1px solid var(--bronze);
+            border-radius: 0.75rem;
+            padding: 2rem;
+        }
+        .card h3 {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .stat {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--gold-dark), var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, var(--gold-dark), var(--gold-light));
+            color: var(--void);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 0 20px rgba(255,215,0,0.3);
+        }
+        .hint {
+            color: var(--text-dim);
+            font-size: 0.8125rem;
+            margin-top: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">NEXT<span>AURA</span> — Vault Dashboard</div>
+        <div class="user-info">
+            <span id="user-email">Loading...</span>
+            <span class="badge" id="user-badge">AUDIT</span>
+            <a href="/accounts/logout/" style="color: var(--text-dim); text-decoration: none; font-size: 0.8125rem;">Exit Vault</a>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Scans Remaining</h3>
+            <div class="stat" id="scans-remaining">--</div>
+            <p class="hint">First 50 audits are complimentary</p>
+        </div>
+        <div class="card">
+            <h3>Scans Used</h3>
+            <div class="stat" id="scans-used">--</div>
+        </div>
+        <div class="card">
+            <h3>Account Status</h3>
+            <div class="stat" style="font-size: 1.5rem; margin-top: 1rem;" id="account-status">AUDIT</div>
+            <p class="hint">$50/scan after free tier</p>
+        </div>
+    </div>
+
+    <div class="card" style="text-align: center; padding: 4rem 2rem;">
+        <h3 style="font-size: 1.25rem; text-transform: none; margin-bottom: 1rem;">Initiate New Scan</h3>
+        <p style="color: var(--text-muted); margin-bottom: 2rem; max-width: 480px; margin-left: auto; margin-right: auto;">
+            Enter a GitHub repository URL or local path. We'll run the full ViabilityScan suite and generate a Figma action plan.
+        </p>
+        <button class="btn btn-primary" onclick="alert('Scan flow: wire to POST /api/v1/scan/')">
+            Begin Vault Scan
+        </button>
+        <p class="hint">This will trigger the full security, deployment, and reliability analysis.</p>
+    </div>
+
+    <script>
+        // Fetch user info from API
+        fetch('/api/v1/me/')
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (data) {
+                    document.getElementById('user-email').textContent = data.email || data.username;
+                    if (data.is_staff) {
+                        document.getElementById('user-badge').textContent = 'EMPLOYEE';
+                        document.getElementById('user-badge').classList.add('staff');
+                    }
+                }
+            })
+            .catch(() => {
+                document.getElementById('user-email').textContent = 'Guest';
+            });
+
+        // Fetch quota
+        fetch('/api/v1/quota/')
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (data) {
+                    document.getElementById('scans-remaining').textContent = data.scans_remaining;
+                    document.getElementById('scans-used').textContent = data.scans_used;
+                    document.getElementById('account-status').textContent = data.paid ? 'PAID' : 'AUDIT';
+                }
+            });
+    </script>
+</body>
+</html>

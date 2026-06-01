@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internal Operations — NextAura</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --void: #0D0D0D;
+            --vault: #1A1A1B;
+            --bronze: #806000;
+            --gold-light: #FFD700;
+            --gold-dark: #B8860B;
+            --red: #ff5f56;
+            --text: #FFFFFF;
+            --text-muted: rgba(255,255,255,0.55);
+            --text-dim: rgba(255,255,255,0.25);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--void);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--red);
+            margin-bottom: 2rem;
+        }
+        .logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: 0.05em;
+        }
+        .logo span {
+            background: linear-gradient(45deg, var(--gold-dark), var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            background: var(--red);
+            color: var(--void);
+            font-size: 0.6875rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
+            background: var(--vault);
+            border: 1px solid var(--bronze);
+            border-radius: 0.75rem;
+            padding: 2rem;
+        }
+        .card h3 {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.9375rem;
+            line-height: 1.7;
+        }
+        .alert {
+            background: rgba(255,95,86,0.1);
+            border: 1px solid var(--red);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">NEXT<span>AURA</span> — Internal Operations</div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span class="badge">RESTRICTED</span>
+            <a href="/accounts/logout/" style="color: var(--text-dim); text-decoration: none; font-size: 0.8125rem; font-family: 'JetBrains Mono', monospace;">EXIT</a>
+        </div>
+    </div>
+
+    <div class="alert">
+        ⚠️ INTERNAL USE ONLY — Employee Portal for NextAura Operations. All access is logged.
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Scan Queue</h3>
+            <p>View pending and running scans across all users. Manage worker allocation and troubleshoot failures.</p>
+        </div>
+        <div class="card">
+            <h3>Billing & Revenue</h3>
+            <p>Stripe dashboard integration. View MRR, churn, and which users have exhausted their free tier.</p>
+        </div>
+        <div class="card">
+            <h3>User Management</h3>
+            <p>Audit all registered users. Promote/demote staff. Review OAuth provider distribution.</p>
+        </div>
+        <div class="card">
+            <h3>Figma Reports</h3>
+            <p>Manage Figma workspace templates. Review generated action plans and quality metrics.</p>
+        </div>
+    </div>
+</body>
+</html>

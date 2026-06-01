@@ -1,4 +1,43 @@
 from django.db import models
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+class UserProfile(models.Model):
+    """Extended user profile for scan quotas and billing."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    scans_used = models.PositiveIntegerField(default=0)
+    scans_limit = models.PositiveIntegerField(default=50)  # 50 free audits
+    paid = models.BooleanField(default=False)
+    stripe_customer_id = models.CharField(max_length=255, blank=True)
+    stripe_subscription_id = models.CharField(max_length=255, blank=True)
+    figma_token = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def scans_remaining(self):
+        return max(0, self.scans_limit - self.scans_used)
+
+    @property
+    def can_scan(self):
+        return self.scans_remaining > 0 or self.paid
+
+    def __str__(self):
+        return f"{self.user.email} — {self.scans_used}/{self.scans_limit} scans"
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
 
 
 class Repository(models.Model):
@@ -28,18 +67,21 @@ class ScanRun(models.Model):
         COMPLETED = "COMPLETED", "Completed"
         FAILED = "FAILED", "Failed"
 
-    repository = models.ForeignKey(Repository, on_delete=models.CASCADE, related_name="scans")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="scans", null=True, blank=True)
+    repository = models.ForeignKey(Repository, on_delete=models.CASCADE, related_name="scans", null=True, blank=True)
     started_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     scores = models.JSONField(default=dict)
     gate = models.CharField(max_length=10, default="")
     full_mode = models.BooleanField(default=False)
+    report_url = models.URLField(blank=True)
+    figma_url = models.URLField(blank=True)
 
     class Meta:
         ordering = ["-started_at"]
         indexes = [
-            models.Index(fields=["repository", "started_at"]),
+            models.Index(fields=["user", "started_at"]),
             models.Index(fields=["status"]),
         ]
 
