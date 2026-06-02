@@ -48,6 +48,7 @@ ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-# Run migrations and start gunicorn
+# Run migrations, setup OAuth apps from env, and start gunicorn
 CMD python manage.py migrate --run-syncdb && \
+    python manage.py setup_oauth && \
     gunicorn django_project.wsgi:application --bind 0.0.0.0:8000 --workers 2
