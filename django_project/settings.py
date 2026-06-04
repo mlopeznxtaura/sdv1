@@ -16,6 +16,9 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# Trust Cloudflare proxy and custom domain for CSRF
+CSRF_TRUSTED_ORIGINS = [f'https://{host.strip()}' for host in ALLOWED_HOSTS if host.strip() not in ('localhost', '127.0.0.1', '')]
+
 # ── Apps ──────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
     'django.contrib.admin',
