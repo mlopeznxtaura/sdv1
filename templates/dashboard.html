@@ -3,189 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vault Dashboard — NextAura</title>
+    <title>sdv1 — Security &amp; Deployment Readiness</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --void: #0D0D0D;
-            --vault: #1A1A1B;
-            --bronze: #806000;
-            --gold-light: #FFD700;
-            --gold-dark: #B8860B;
-            --text: #FFFFFF;
-            --text-muted: rgba(255,255,255,0.55);
-            --text-dim: rgba(255,255,255,0.25);
+            --bg: #FAF8F4;
+            --surface: #FFFFFF;
+            --surface2: #F3EFE7;
+            --border: #E5DECF;
+            --gold: #C9A227;
+            --gold-soft: #E8D48B;
+            --gold-tint: #FBF6E8;
+            --ink: #2A2722;
+            --ink-muted: #6E675B;
+            --ink-dim: #A39B8B;
+            --pass: #2E7D4F;
+            --fail: #C0392B;
+            --warn: #B07D12;
+            --mono: 'JetBrains Mono', monospace;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, sans-serif;
-            background: var(--void);
-            color: var(--text);
+            background: var(--bg);
+            color: var(--ink);
             min-height: 100vh;
             padding: 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
         }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 2rem;
-            border-bottom: 1px solid var(--bronze);
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--gold-soft);
             margin-bottom: 2rem;
         }
         .logo {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--mono);
             font-weight: 600;
-            font-size: 1.1rem;
-            letter-spacing: 0.05em;
+            font-size: 1.05rem;
+            letter-spacing: 0.04em;
         }
-        .logo span {
-            background: linear-gradient(45deg, var(--gold-dark), var(--gold-light));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            font-size: 0.875rem;
-            color: var(--text-muted);
-        }
+        .logo span { color: var(--gold); }
         .badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 0.25rem;
-            border: 1px solid var(--bronze);
+            padding: 0.3rem 0.85rem;
+            border-radius: 999px;
+            border: 1px solid var(--gold-soft);
+            background: var(--gold-tint);
+            color: var(--warn);
             font-size: 0.6875rem;
-            letter-spacing: 0.05em;
+            font-family: var(--mono);
+            letter-spacing: 0.08em;
             text-transform: uppercase;
-        }
-        .badge.staff {
-            background: linear-gradient(45deg, var(--gold-dark), var(--gold-light));
-            color: var(--void);
-            border: none;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
         }
         .card {
-            background: var(--vault);
-            border: 1px solid var(--bronze);
-            border-radius: 0.75rem;
-            padding: 2rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.875rem;
+            padding: 1.75rem;
+            box-shadow: 0 1px 3px rgba(42,39,34,0.04);
         }
-        .card h3 {
+        .scan-box { margin-bottom: 2rem; }
+        .scan-box h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .scan-box p.sub { color: var(--ink-muted); font-size: 0.9rem; margin-bottom: 1.25rem; }
+        .scan-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .scan-input {
+            flex: 1;
+            min-width: 280px;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.55rem;
+            background: var(--surface);
+            color: var(--ink);
+            font-family: var(--mono);
             font-size: 0.875rem;
-            color: var(--text-muted);
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            margin-bottom: 1rem;
-            font-family: 'JetBrains Mono', monospace;
         }
-        .stat {
-            font-size: 3rem;
-            font-weight: 800;
-            background: linear-gradient(45deg, var(--gold-dark), var(--gold-light));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+        .scan-input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,162,39,0.15); }
         .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            font-size: 0.9375rem;
-            text-decoration: none;
-            transition: all 0.2s;
+            padding: 0.8rem 1.75rem;
+            border-radius: 0.55rem;
+            font-weight: 650;
+            font-size: 0.9rem;
             border: none;
             cursor: pointer;
+            background: linear-gradient(45deg, var(--gold), var(--gold-soft));
+            color: #2A2310;
+            transition: all 0.2s;
         }
-        .btn-primary {
-            background: linear-gradient(45deg, var(--gold-dark), var(--gold-light));
-            color: var(--void);
-        }
-        .btn-primary:hover {
-            box-shadow: 0 0 20px rgba(255,215,0,0.3);
-        }
-        .hint {
-            color: var(--text-dim);
-            font-size: 0.8125rem;
+        .btn:hover { box-shadow: 0 3px 14px rgba(201,162,39,0.35); transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.55; cursor: wait; transform: none; box-shadow: none; }
+        .mode-row { margin-top: 0.9rem; display: flex; gap: 1.25rem; font-size: 0.8125rem; color: var(--ink-muted); }
+        .mode-row label { display: inline-flex; gap: 0.4rem; align-items: center; cursor: pointer; }
+        .status-line {
             margin-top: 1rem;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--mono);
+            font-size: 0.8125rem;
+            color: var(--warn);
+            min-height: 1.2rem;
+        }
+        .results { display: none; }
+        .gate-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.75rem;
+            border-radius: 0.875rem;
+            margin-bottom: 1.5rem;
+            font-family: var(--mono);
+        }
+        .gate-banner.pass { background: #EAF5EE; border: 1px solid #BFE0CC; color: var(--pass); }
+        .gate-banner.fail { background: #FBEDEA; border: 1px solid #EBC4BC; color: var(--fail); }
+        .gate-banner .gate-word { font-size: 1.6rem; font-weight: 700; letter-spacing: 0.06em; }
+        .gate-banner .gate-meta { font-size: 0.8rem; opacity: 0.85; text-align: right; }
+        .scores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .score-card { text-align: center; }
+        .score-card h3 {
+            font-size: 0.75rem;
+            color: var(--ink-muted);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-family: var(--mono);
+            margin-bottom: 0.6rem;
+        }
+        .score-val { font-size: 2.4rem; font-weight: 800; }
+        .score-val.good { color: var(--pass); }
+        .score-val.mid  { color: var(--warn); }
+        .score-val.bad  { color: var(--fail); }
+        .score-bar { height: 5px; border-radius: 3px; background: var(--surface2); margin-top: 0.7rem; overflow: hidden; }
+        .score-bar i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--gold), var(--gold-soft)); }
+        .findings h2 { font-size: 1.05rem; margin-bottom: 1rem; }
+        .finding {
+            display: flex;
+            gap: 0.9rem;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.55rem;
+            margin-bottom: 0.55rem;
+            background: var(--surface);
+            font-size: 0.85rem;
+            align-items: baseline;
+        }
+        .sev {
+            font-family: var(--mono);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            padding: 0.15rem 0.6rem;
+            border-radius: 999px;
+            letter-spacing: 0.05em;
+            flex-shrink: 0;
+        }
+        .sev.CRITICAL { background: #FBEDEA; color: var(--fail); }
+        .sev.HIGH     { background: #FDF1E3; color: #B3591A; }
+        .sev.MEDIUM   { background: var(--gold-tint); color: var(--warn); }
+        .sev.LOW      { background: #EDF2FA; color: #3D6CB3; }
+        .sev.INFO     { background: var(--surface2); color: var(--ink-muted); }
+        .finding .f-msg { color: var(--ink); }
+        .finding .f-loc { color: var(--ink-dim); font-family: var(--mono); font-size: 0.75rem; }
+        .footer {
+            margin-top: 3rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border);
+            color: var(--ink-dim);
+            font-size: 0.78rem;
+            font-family: var(--mono);
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="logo">NEXT<span>AURA</span> — Vault Dashboard</div>
-        <div class="user-info">
-            <span id="user-email">Loading...</span>
-            <span class="badge" id="user-badge">AUDIT</span>
-            <a href="/accounts/logout/" style="color: var(--text-dim); text-decoration: none; font-size: 0.8125rem;">Exit Vault</a>
+        <div class="logo">NEXT<span>AURA</span> · sdv1 — security &amp; deployment readiness</div>
+        <span class="badge">Open Source · Unlimited Scans</span>
+    </div>
+
+    <div class="card scan-box">
+        <h2>Evaluate a repository or website</h2>
+        <p class="sub">Paste a GitHub repository URL (deep scan: security, deployment, reliability) or any website URL (live security-header audit).</p>
+        <div class="scan-row">
+            <input id="target" class="scan-input" type="text"
+                   placeholder="https://github.com/owner/repo  ·  or  ·  https://example.com"
+                   onkeydown="if(event.key==='Enter')runScan()">
+            <button id="scan-btn" class="btn" onclick="runScan()">Run Scan</button>
+        </div>
+        <div class="mode-row">
+            <label><input type="radio" name="mode" value="mvp" checked> MVP (fast)</label>
+            <label><input type="radio" name="mode" value="full"> Full (deep scan)</label>
+        </div>
+        <div class="status-line" id="status"></div>
+    </div>
+
+    <div class="results" id="results">
+        <div class="gate-banner" id="gate-banner">
+            <div class="gate-word" id="gate-word">—</div>
+            <div class="gate-meta" id="gate-meta"></div>
+        </div>
+        <div class="scores">
+            <div class="card score-card">
+                <h3>Viability</h3>
+                <div class="score-val" id="s-viability">—</div>
+                <div class="score-bar"><i id="b-viability"></i></div>
+            </div>
+            <div class="card score-card">
+                <h3>Security</h3>
+                <div class="score-val" id="s-security">—</div>
+                <div class="score-bar"><i id="b-security"></i></div>
+            </div>
+            <div class="card score-card">
+                <h3>Deployment</h3>
+                <div class="score-val" id="s-deployment">—</div>
+                <div class="score-bar"><i id="b-deployment"></i></div>
+            </div>
+            <div class="card score-card">
+                <h3>Reliability</h3>
+                <div class="score-val" id="s-reliability">—</div>
+                <div class="score-bar"><i id="b-reliability"></i></div>
+            </div>
+            <div class="card score-card" id="card-supply" style="display:none">
+                <h3>Supply Chain</h3>
+                <div class="score-val" id="s-supply">—</div>
+                <div class="score-bar"><i id="b-supply"></i></div>
+            </div>
+        </div>
+        <div class="findings">
+            <h2>Findings</h2>
+            <div id="findings-list"></div>
         </div>
     </div>
 
-    <div class="grid">
-        <div class="card">
-            <h3>Scans Remaining</h3>
-            <div class="stat" id="scans-remaining">--</div>
-            <p class="hint">First 50 audits are complimentary</p>
-        </div>
-        <div class="card">
-            <h3>Scans Used</h3>
-            <div class="stat" id="scans-used">--</div>
-        </div>
-        <div class="card">
-            <h3>Account Status</h3>
-            <div class="stat" style="font-size: 1.5rem; margin-top: 1rem;" id="account-status">AUDIT</div>
-            <p class="hint">$50/scan after free tier</p>
-        </div>
-    </div>
-
-    <div class="card" style="text-align: center; padding: 4rem 2rem;">
-        <h3 style="font-size: 1.25rem; text-transform: none; margin-bottom: 1rem;">Initiate New Scan</h3>
-        <p style="color: var(--text-muted); margin-bottom: 2rem; max-width: 480px; margin-left: auto; margin-right: auto;">
-            Enter a GitHub repository URL or local path. We'll run the full ViabilityScan suite and generate a Figma action plan.
-        </p>
-        <button class="btn btn-primary" onclick="alert('Scan flow: wire to POST /api/v1/scan/')">
-            Begin Vault Scan
-        </button>
-        <p class="hint">This will trigger the full security, deployment, and reliability analysis.</p>
-    </div>
+    <div class="footer">sdv1 · ViabilityScan engine · Envoy edge · IBM Cloud Code Engine · fully open source</div>
 
     <script>
-        // Fetch user info from API
-        fetch('/api/v1/me/')
-            .then(r => r.ok ? r.json() : null)
-            .then(data => {
-                if (data) {
-                    document.getElementById('user-email').textContent = data.email || data.username;
-                    if (data.is_staff) {
-                        document.getElementById('user-badge').textContent = 'EMPLOYEE';
-                        document.getElementById('user-badge').classList.add('staff');
-                    }
-                }
-            })
-            .catch(() => {
-                document.getElementById('user-email').textContent = 'Guest';
-            });
+        const SEV_ORDER = {CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3, INFO: 4};
 
-        // Fetch quota
-        fetch('/api/v1/quota/')
-            .then(r => r.ok ? r.json() : null)
-            .then(data => {
-                if (data) {
-                    document.getElementById('scans-remaining').textContent = data.scans_remaining;
-                    document.getElementById('scans-used').textContent = data.scans_used;
-                    document.getElementById('account-status').textContent = data.paid ? 'PAID' : 'AUDIT';
-                }
-            });
+        function scoreClass(v) { return v >= 75 ? 'good' : v >= 50 ? 'mid' : 'bad'; }
+
+        function setScore(key, val) {
+            const el = document.getElementById('s-' + key);
+            const bar = document.getElementById('b-' + key);
+            el.textContent = Math.round(val);
+            el.className = 'score-val ' + scoreClass(val);
+            bar.style.width = Math.max(2, Math.min(100, val)) + '%';
+        }
+
+        async function runScan() {
+            const target = document.getElementById('target').value.trim();
+            const status = document.getElementById('status');
+            const btn = document.getElementById('scan-btn');
+            if (!target) { status.textContent = 'Enter a repository or website URL first.'; return; }
+
+            const full = document.querySelector('input[name="mode"]:checked').value === 'full';
+            btn.disabled = true;
+            document.getElementById('results').style.display = 'none';
+            status.textContent = 'Scanning ' + target + ' — this can take up to a couple of minutes for large repos...';
+
+            try {
+                const res = await fetch('/api/v1/scan/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({repo_url: target, full})
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || data.error || ('HTTP ' + res.status));
+                render(data);
+                status.textContent = 'Done in ' + (data.elapsed_seconds ?? '?') + 's.';
+            } catch (e) {
+                status.textContent = 'Scan failed: ' + e.message;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function render(data) {
+            const results = document.getElementById('results');
+            const banner = document.getElementById('gate-banner');
+            const gate = (data.gate || 'UNKNOWN').toUpperCase();
+            const pass = gate === 'PASS' || gate === 'SECURE';
+
+            banner.className = 'gate-banner ' + (pass ? 'pass' : 'fail');
+            document.getElementById('gate-word').textContent = gate;
+            const reasons = (data.report && data.report.gate_reasons) || data.gate_reasons || [];
+            document.getElementById('gate-meta').innerHTML =
+                (data.repo || '') + '<br>' + (Array.isArray(reasons) ? reasons.join(' · ') : '');
+
+            const scores = data.scores || {};
+            setScore('viability',  scores.viability  ?? scores.overall ?? 0);
+            setScore('security',   scores.security   ?? 0);
+            setScore('deployment', scores.deployment ?? 0);
+            setScore('reliability',scores.reliability?? 0);
+            const supplyCard = document.getElementById('card-supply');
+            if (scores.supply_chain !== undefined && scores.supply_chain !== null) {
+                supplyCard.style.display = '';
+                setScore('supply', scores.supply_chain);
+            } else {
+                supplyCard.style.display = 'none';
+            }
+
+            const list = document.getElementById('findings-list');
+            list.innerHTML = '';
+            const layers = (data.report && data.report.layers) || {};
+            let findings = [];
+            for (const layer of Object.values(layers)) {
+                for (const f of (layer.findings || [])) findings.push(f);
+            }
+            findings.sort((a, b) => (SEV_ORDER[a.severity] ?? 9) - (SEV_ORDER[b.severity] ?? 9));
+            if (findings.length === 0) {
+                list.innerHTML = '<div class="finding"><span class="sev INFO">INFO</span><span class="f-msg">No findings reported. Clean scan.</span></div>';
+            }
+            for (const f of findings.slice(0, 200)) {
+                const div = document.createElement('div');
+                div.className = 'finding';
+                const sev = (f.severity || 'INFO').toUpperCase();
+                const loc = f.file ? `${f.file}${f.line ? ':' + f.line : ''}` : (f.location || '');
+                div.innerHTML = `<span class="sev ${sev}">${sev}</span>` +
+                    `<span class="f-msg">${escapeHtml(f.message || f.title || f.rule || 'finding')}</span>` +
+                    (loc ? `<span class="f-loc">${escapeHtml(loc)}</span>` : '');
+                list.appendChild(div);
+            }
+            results.style.display = 'block';
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+        }
     </script>
 </body>
 </html>

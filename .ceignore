@@ -1,0 +1,10 @@
+.git
+.venv
+.pytest_cache
+.playwright-mcp
+.wrangler
+dist
+data
+viabilityscan.egg-info
+**/__pycache__
+**/*.pyc

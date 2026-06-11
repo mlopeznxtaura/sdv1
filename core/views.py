@@ -12,6 +12,8 @@ from django.http import JsonResponse
 from django.views import View
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 from viabilityscan.engine import ViabilityEngine
 
@@ -22,23 +24,13 @@ class StaffRequiredMixin(UserPassesTestMixin):
         return self.request.user.is_authenticated and self.request.user.is_staff
 
 
-class ScanCreateView(LoginRequiredMixin, View):
-    """POST /api/v1/scan/ — trigger a new scan."""
+@method_decorator(csrf_exempt, name='dispatch')
+class ScanCreateView(View):
+    """POST /api/v1/scan/ — trigger a new scan. Open source: no auth, no quota."""
 
     def post(self, request, *args, **kwargs):
         user = request.user
         profile = getattr(user, 'profile', None)
-
-        # Check quota
-        scans_used = profile.scans_used if profile else 0
-        scans_limit = 50 if not profile or not profile.paid else 9999
-        if scans_used >= scans_limit and not (profile and profile.paid):
-            return JsonResponse({
-                "error": "QUOTA_EXCEEDED",
-                "message": "You've used all free scans. Upgrade to continue.",
-                "scans_used": scans_used,
-                "scans_limit": scans_limit,
-            }, status=402)
 
         # Get repo URL or path from request
         data = json.loads(request.body or '{}')
@@ -48,8 +40,23 @@ class ScanCreateView(LoginRequiredMixin, View):
         if not repo_url:
             return JsonResponse({
                 "error": "MISSING_REPO_URL",
-                "message": "Provide repo_url in JSON body. Can be a GitHub URL or local path.",
+                "message": "Provide repo_url in JSON body. Can be a GitHub URL, website URL, or local path.",
             }, status=400)
+
+        # Website URLs (non-GitHub http/https) → live security-header audit
+        if repo_url.startswith(('http://', 'https://')) and not repo_url.startswith('https://github.com/'):
+            from .website_scan import scan_website
+            try:
+                result = scan_website(repo_url)
+            except Exception as e:
+                return JsonResponse({
+                    "error": "WEBSITE_SCAN_FAILED",
+                    "message": str(e),
+                }, status=500)
+            if profile:
+                profile.scans_used += 1
+                profile.save()
+            return JsonResponse(result)
 
         # Handle GitHub URLs
         if repo_url.startswith('https://github.com/'):
@@ -127,7 +134,7 @@ class ScanCreateView(LoginRequiredMixin, View):
         })
 
 
-class ScanResultView(LoginRequiredMixin, View):
+class ScanResultView(View):
     """GET /api/v1/results/<id>/ — fetch scan result."""
 
     def get(self, request, pk, *args, **kwargs):
@@ -140,33 +147,44 @@ class ScanResultView(LoginRequiredMixin, View):
         })
 
 
-class QuotaView(LoginRequiredMixin, View):
-    """GET /api/v1/quota/ — how many scans left?"""
+class QuotaView(View):
+    """GET /api/v1/quota/ — open source: unlimited scans."""
 
     def get(self, request, *args, **kwargs):
-        user = request.user
-        profile = getattr(user, 'profile', None)
-        scans_used = profile.scans_used if profile else 0
-        scans_limit = 50 if not profile or not profile.paid else 9999
-
         return JsonResponse({
-            "scans_used": scans_used,
-            "scans_limit": scans_limit,
-            "scans_remaining": max(0, scans_limit - scans_used),
-            "paid": profile.paid if profile else False,
+            "scans_used": 0,
+            "scans_limit": None,
+            "scans_remaining": None,
+            "paid": False,
+            "open_source": True,
         })
 
 
-class CurrentUserView(LoginRequiredMixin, View):
-    """GET /api/v1/me/ — current user info."""
+class HealthView(View):
+    """GET /api/v1/health/ — Envoy health check target."""
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({"status": "ok"})
+
+
+class CurrentUserView(View):
+    """GET /api/v1/me/ — open source: anonymous access allowed."""
 
     def get(self, request, *args, **kwargs):
         user = request.user
+        if user.is_authenticated:
+            return JsonResponse({
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "is_staff": user.is_staff,
+                "provider": None,
+            })
         return JsonResponse({
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "is_staff": user.is_staff,
+            "id": None,
+            "username": "open-source",
+            "email": "",
+            "is_staff": False,
             "provider": None,
         })
 

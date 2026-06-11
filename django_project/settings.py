@@ -29,18 +29,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
 
-    # allauth
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-
-    # social providers — priority order: GitHub, Apple, Google, Supabase, Microsoft, Yahoo
-    'allauth.socialaccount.providers.github',
-    'allauth.socialaccount.providers.apple',
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.microsoft',
-    'allauth.socialaccount.providers.yahoo',
-
     # custom
     'core',
 ]
@@ -53,7 +41,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'django_project.urls'
@@ -94,77 +81,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 SITE_ID = 1
 
-# allauth settings
-ACCOUNT_LOGIN_METHODS = {'email', 'username'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*']
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_UNIQUE_EMAIL = True
-
-# Magic link / passwordless login via email
-ACCOUNT_EMAIL_NOTIFICATIONS = True
-
-# Custom adapters
-ACCOUNT_ADAPTER = 'core.adapter.NextAuraAccountAdapter'
-SOCIALACCOUNT_ADAPTER = 'core.adapter.NextAuraSocialAccountAdapter'
-
-# Login redirects
-LOGIN_REDIRECT_URL = '/dashboard/'
+# Open source: no login flow. Admin remains at /admin/ for ops.
+LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
-
-# Social login settings
-SOCIALACCOUNT_PROVIDERS = {
-    'github': {
-        'APP': {
-            'client_id': os.environ.get('GITHUB_CLIENT_ID', ''),
-            'secret': os.environ.get('GITHUB_CLIENT_SECRET', ''),
-            'key': '',
-        },
-        'SCOPE': ['read:user', 'user:email'],
-    },
-    'apple': {
-        'APP': {
-            'client_id': os.environ.get('APPLE_CLIENT_ID', ''),
-            'secret': os.environ.get('APPLE_SECRET', ''),
-            'key': '',
-        },
-        'CERTIFICATE': os.environ.get('APPLE_CERTIFICATE_PATH', ''),
-        'CERTIFICATE_KEY': os.environ.get('APPLE_CERTIFICATE_KEY_PATH', ''),
-    },
-    'google': {
-        'APP': {
-            'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
-            'secret': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
-            'key': '',
-        },
-        'SCOPE': ['profile', 'email'],
-        'AUTH_PARAMS': {'access_type': 'online'},
-    },
-    'microsoft': {
-        'APP': {
-            'client_id': os.environ.get('MICROSOFT_CLIENT_ID', ''),
-            'secret': os.environ.get('MICROSOFT_CLIENT_SECRET', ''),
-            'key': '',
-        },
-        'SCOPE': ['openid', 'email', 'profile'],
-        'TENANT': 'common',
-    },
-    'yahoo': {
-        'APP': {
-            'client_id': os.environ.get('YAHOO_CLIENT_ID', ''),
-            'secret': os.environ.get('YAHOO_CLIENT_SECRET', ''),
-            'key': '',
-        },
-        'SCOPE': ['openid', 'profile', 'email'],
-    },
-}
-
-# Supabase uses its own OAuth flow — configured as a custom provider
-# See core/supabase_provider.py
 
 # ── Email ─────────────────────────────────────────────────────────────────
 # Production: use SMTP (SendGrid, AWS SES, or Gmail for testing)
@@ -201,7 +124,10 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
+# TLS terminates at Cloudflare/Envoy — gunicorn sees plain HTTP from localhost.
+# SSL redirect must stay off or Envoy health checks 301-loop.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = False
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True

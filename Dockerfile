@@ -22,6 +22,13 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
+# git: repo cloning for scans · curl: health probes · envoy: front proxy / load balancer
+RUN apt-get update && apt-get install -y --no-install-recommends git curl gnupg ca-certificates \
+    && curl -fsSL https://apt.envoyproxy.io/signing.key | gpg --dearmor -o /usr/share/keyrings/envoy-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/envoy-keyring.gpg] https://apt.envoyproxy.io bookworm main" > /etc/apt/sources.list.d/envoy.list \
+    && apt-get update && apt-get install -y --no-install-recommends envoy \
+    && apt-get purge -y gnupg && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
 # Create non-root user
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
@@ -36,6 +43,8 @@ COPY dashboard/ ./dashboard/
 COPY tests/ ./tests/
 COPY .github/ ./.github/
 COPY Makefile README.md LICENSE SECURITY.md CONTRIBUTING.md ./
+COPY envoy.yaml start-envoy.sh ./
+RUN sed -i 's/\r$//' start-envoy.sh && chmod +x start-envoy.sh
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data && chown -R appuser:appgroup /app
@@ -46,9 +55,7 @@ ENV DJANGO_SETTINGS_MODULE=django_project.settings
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-EXPOSE 8000
+# Envoy front proxy on 8080 → gunicorn upstream on 8081
+EXPOSE 8080
 
-# Run migrations, setup OAuth apps from env, and start gunicorn
-CMD python manage.py migrate --run-syncdb && \
-    python manage.py setup_oauth && \
-    gunicorn django_project.wsgi:application --bind 0.0.0.0:8000 --workers 2
+CMD ["./start-envoy.sh"]

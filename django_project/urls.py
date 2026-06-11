@@ -12,8 +12,8 @@ from core import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('core.urls')),
-    path('accounts/', include('allauth.urls')),
-    path('', TemplateView.as_view(template_name='landing.html'), name='landing'),
-    path('dashboard/', TemplateView.as_view(template_name='dashboard.html'), name='dashboard'),
+    # Open source: no landing page, no auth wall — dashboard is the front door
+    path('', TemplateView.as_view(template_name='dashboard.html'), name='dashboard'),
+    path('dashboard/', TemplateView.as_view(template_name='dashboard.html'), name='dashboard-alias'),
     path('internal/', views.InternalDashboardView.as_view(), name='internal'),
 ]

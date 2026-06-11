@@ -15,6 +15,7 @@ from viabilityscan.layers.security_mvp import SecurityMVPLayer
 from viabilityscan.layers.deployment import DeploymentLayer
 from viabilityscan.layers.reliability import ReliabilityLayer
 from viabilityscan.layers.security_full import SecurityFullLayer
+from viabilityscan.layers.supply_chain import SupplyChainLayer
 
 
 class ViabilityEngine:
@@ -45,6 +46,7 @@ class ViabilityEngine:
         sec_result = SecurityMVPLayer(self.repo).run()
         dep_result = DeploymentLayer(self.repo).run()
         rel_result = ReliabilityLayer(self.repo).run()
+        supply_result = SupplyChainLayer(self.repo).run()
 
         full_result = {}
         if self.full:
@@ -55,9 +57,18 @@ class ViabilityEngine:
         sec_result = self._m2_prune(sec_result)
         dep_result = self._m2_prune(dep_result)
         rel_result = self._m2_prune(rel_result)
+        supply_result = self._m2_prune(supply_result)
+
+        # Supply chain hardening blends into the security score when applicable
+        # (70% classic security, 30% DepGuard supply-chain checks)
+        if not supply_result.get("skipped"):
+            sec_result["score"] = round(
+                0.7 * sec_result.get("score", 0) + 0.3 * supply_result.get("score", 0), 1
+            )
 
         # M3 — weight findings, compute overall score
         scores = self._triangulation_scalar(sec_result, dep_result, rel_result)
+        scores["supply_chain"] = supply_result.get("score", 100)
         gate, reasons = self._phase_gate(scores)
 
         elapsed = round(time.time() - t0, 2)
@@ -78,6 +89,7 @@ class ViabilityEngine:
                 "security_mvp": sec_result,
                 "deployment": dep_result,
                 "reliability": rel_result,
+                "supply_chain": supply_result,
                 **({"security_full": full_result} if self.full else {}),
             },
             "next_frame_prediction": self._next_frame_prediction(gate, sec_result, dep_result, rel_result),

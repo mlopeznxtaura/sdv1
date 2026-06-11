@@ -1,0 +1,20 @@
+name = "nextaura-proxy"
+main = "proxy.js"
+compatibility_date = "2026-06-02"
+
+routes = [
+  # app2.nextaura.fit is served by its own existing worker ("nextaura-app2") — left untouched
+  # Existing DNS records — attach worker via zone routes
+  { pattern = "app3.nextaura.fit/*", zone_name = "nextaura.fit" },
+  { pattern = "app5.nextaura.fit/*", zone_name = "nextaura.fit" },
+  # No DNS yet — let Cloudflare create the records
+  { pattern = "app4.nextaura.fit", custom_domain = true },
+  { pattern = "app6.nextaura.fit", custom_domain = true },
+  { pattern = "app7.nextaura.fit", custom_domain = true },
+  { pattern = "app8.nextaura.fit", custom_domain = true },
+  { pattern = "qvrmv3.nextaura.fit", custom_domain = true },
+  { pattern = "stage-shell.nextaura.fit", custom_domain = true },
+  { pattern = "stage1.nextaura.fit", custom_domain = true },
+  { pattern = "stage2.nextaura.fit", custom_domain = true },
+  { pattern = "v21all.nextaura.fit", custom_domain = true },
+]
